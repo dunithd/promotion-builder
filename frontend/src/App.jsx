@@ -600,14 +600,14 @@ export default function App() {
     const fetchData = async () => {
       try {
         // Fetch Stats
-        const statsRes = await fetch('http://localhost:8000/stats');
+        const statsRes = await fetch('/api/stats');
         if (statsRes.ok) {
           const statsJson = await statsRes.json();
           setStats(statsJson);
         }
 
         // Fetch Chart Data
-        const chartRes = await fetch('http://localhost:8000/chart-data');
+        const chartRes = await fetch('/api/chart-data');
         if (chartRes.ok) {
           const chartJson = await chartRes.json();
           // Extract just the counts for the sparkline

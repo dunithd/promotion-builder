@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    ports:
+      - "3000:80" # Maps localhost:3000 to internal Nginx port 80
+  
+  api:
+    build: ./api
+    container_name: api
+    ports:
+      - "8000:8000"
+    environment:
+      # Pass your actual DB connection string here
+      - DATABASE_URL=postgres://username:password@your-remote-host.com:5432/your_db_name
+    restart: always

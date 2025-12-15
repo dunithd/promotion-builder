@@ -8,9 +8,9 @@ services:
     ports:
       - "3000:80" # Maps localhost:3000 to internal Nginx port 80
   
-  api:
-    build: ./api
-    container_name: api
+  backend:
+    build: ./backend
+    container_name: backend
     ports:
       - "8000:8000"
     environment:

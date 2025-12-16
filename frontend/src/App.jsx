@@ -623,7 +623,7 @@ export default function App() {
     fetchData();
 
     // Poll every 2 seconds
-    const interval = setInterval(fetchData, 10000);
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -637,7 +637,7 @@ export default function App() {
   const handleSimulation = async (type) => {
     // 1. Trigger the Real Backend API
     try {
-      await fetch('http://localhost:8000/transactions', {
+      await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}) // Empty body as requested

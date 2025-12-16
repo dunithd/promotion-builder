@@ -14,6 +14,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Pass your actual DB connection string here
-      - DATABASE_URL=postgres://username:password@your-remote-host.com:5432/your_db_name
+      - LH_DB_URL
+      - PGD_DB_URL
     restart: always

@@ -23,10 +23,9 @@ app.add_middleware(
 )
 
 # --- CONFIGURATION ---
-# REPLACE these values with your actual remote database credentials
-# Format: "postgres://user:password@host:port/database_name"
-DATABASE_URL = "postgres://edb_admin:Spr!ng20232025@p-mxzpggoxy4-rw-external-92f41c1f56a41290.elb.us-east-2.amazonaws.com:5432/edb_admin?sslmode=require"
-PGD_URL = "postgres://edb_admin:Spr!ng20232025@p-prl8tnl1f6-a-proxy-d020cbca35642a3b.elb.us-east-2.amazonaws.com:5432/bdrdb?sslmode=require"
+# Read the variables (Default to None or raise error if missing)
+lh_url = os.getenv("LH_DB_URL")
+pgd_url = os.getenv("PGD_DB_URL")
 
 # --- DATA MODEL ---
 class TransactionStats(BaseModel):
@@ -56,9 +55,10 @@ def get_transaction_stats():
     and returns the live results.
     """
     try:
-        # Connect to the database
+        if not lh_url:
+            raise ValueError("LH_DB_URL is not set!")
         # We use a context manager (with...) to ensure the connection closes automatically
-        with psycopg2.connect(DATABASE_URL) as conn:
+        with psycopg2.connect(lh_url) as conn:
             
             # Use RealDictCursor to access columns by name
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -96,7 +96,7 @@ def get_transaction_stats():
 @app.get("/chart-data", response_model=List[ChartDataPoint])
 def get_chart_data():
     try:
-        with psycopg2.connect(DATABASE_URL) as conn:
+        with psycopg2.connect(lh_url) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 query = """
                 SELECT
@@ -141,7 +141,7 @@ def create_transaction(txn: TransactionInput):
             t_type = 'credit' if random.random() > 0.5 else 'debit'
 
         # 2. Database Insert
-        with psycopg2.connect(PGD_URL) as conn:
+        with psycopg2.connect(pgd_url) as conn:
             with conn.cursor() as cur:
                 insert_query = """
                 INSERT INTO transactions2 (user_id, amount, transaction_type)

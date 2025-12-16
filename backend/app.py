@@ -84,8 +84,6 @@ def get_transaction_stats():
                 FROM {}.{};
                 """).format(sql.Identifier('public'),sql.Identifier(TABLE_NAME))
                 
-                print(query)
-                
                 cur.execute(query)
                 result = cur.fetchone()
                 
@@ -104,9 +102,9 @@ def get_chart_data():
     try:
         with psycopg2.connect(lh_url) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                table_ident = sql.Identifier(TABLE_NAME, 'public.transactions')
+                table_ident = sql.Identifier(TABLE_NAME)
 
-                query = sql.SQL("""
+                query = """
                 SELECT
                     date_trunc('minute', time_spine) AS minute_bucket,
                     COUNT(t.id) AS transaction_count
@@ -121,7 +119,7 @@ def get_chart_data():
                     ON date_trunc('minute', t.created_at) = date_trunc('minute', time_spine)
                 GROUP BY 1
                 ORDER BY 1 ASC;
-                """).format(table_ident)
+                """.format(TABLE_NAME)
 
                 cur.execute(query)
                 return cur.fetchall()
@@ -152,7 +150,7 @@ def create_transaction(txn: TransactionInput):
         # 2. Database Insert
         with psycopg2.connect(pgd_url) as conn:
             with conn.cursor() as cur:
-                table_ident = sql.Identifier(TABLE_NAME, 'public.transactions')
+                table_ident = sql.Identifier(TABLE_NAME)
                 insert_query = sql.SQL("""
                 INSERT INTO {} (user_id, amount, transaction_type)
                 VALUES (%s, %s, %s)

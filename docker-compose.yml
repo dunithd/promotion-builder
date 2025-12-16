@@ -16,4 +16,5 @@ services:
     environment:
       - LH_DB_URL
       - PGD_DB_URL
+      - SCHEMA_NAME
     restart: always

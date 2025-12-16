@@ -8,6 +8,7 @@ from typing import List
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 import random
+from psycopg2 import sql
 
 app = FastAPI()
 
@@ -26,6 +27,9 @@ app.add_middleware(
 # Read the variables (Default to None or raise error if missing)
 lh_url = os.getenv("LH_DB_URL")
 pgd_url = os.getenv("PGD_DB_URL")
+
+# Schema name for fully-qualified table references (default to public)
+SCHEMA_NAME = os.getenv("SCHEMA_NAME", "public")
 
 # --- DATA MODEL ---
 class TransactionStats(BaseModel):
@@ -63,7 +67,10 @@ def get_transaction_stats():
             # Use RealDictCursor to access columns by name
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 
-                query = """
+                # Build a schema-qualified table identifier safely
+                table_ident = sql.Identifier(SCHEMA_NAME, 'transactions')
+
+                query = sql.SQL("""
                 SELECT 
                     -- 1. Total transaction count
                     COUNT(*) AS total_count,
@@ -77,9 +84,9 @@ def get_transaction_stats():
                     -- 3. Total revenue (COALESCE handles NULL if table is empty)
                     COALESCE(SUM(amount), 0) AS total_revenue
 
-                FROM transactions2;
-                """
-                
+                FROM {}
+                """).format(table_ident)
+
                 cur.execute(query)
                 result = cur.fetchone()
                 
@@ -98,7 +105,9 @@ def get_chart_data():
     try:
         with psycopg2.connect(lh_url) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                query = """
+                table_ident = sql.Identifier(SCHEMA_NAME, 'transactions')
+
+                query = sql.SQL("""
                 SELECT
                     date_trunc('minute', time_spine) AS minute_bucket,
                     COUNT(t.id) AS transaction_count
@@ -109,11 +118,12 @@ def get_chart_data():
                         INTERVAL '1 minute'
                     ) AS time_spine
                 LEFT JOIN 
-                    transactions2 t 
+                    {} t 
                     ON date_trunc('minute', t.created_at) = date_trunc('minute', time_spine)
                 GROUP BY 1
                 ORDER BY 1 ASC;
-                """
+                """).format(table_ident)
+
                 cur.execute(query)
                 return cur.fetchall()
 
@@ -143,11 +153,12 @@ def create_transaction(txn: TransactionInput):
         # 2. Database Insert
         with psycopg2.connect(pgd_url) as conn:
             with conn.cursor() as cur:
-                insert_query = """
-                INSERT INTO transactions2 (user_id, amount, transaction_type)
+                table_ident = sql.Identifier(SCHEMA_NAME, 'transactions')
+                insert_query = sql.SQL("""
+                INSERT INTO {} (user_id, amount, transaction_type)
                 VALUES (%s, %s, %s)
                 RETURNING id, created_at;
-                """
+                """).format(table_ident)
                 # Execute the insert
                 cur.execute(insert_query, (user_id, amount, t_type))
                 

@@ -35,7 +35,7 @@ import {
 /* CONFIGURATION                               */
 /* -------------------------------------------------------------------------- */
 
-const API_KEY = ""; // 🔴 INSERT YOUR GEMINI API KEY HERE
+const API_KEY = "AIzaSyDl_nzrjkLSLXwsRMB1svw8yM5f7mh00hw"; // 🔴 INSERT YOUR GEMINI API KEY HERE
 
 // Mock AI Service
 const callGemini = async (prompt, systemInstruction = "") => {

@@ -17,4 +17,5 @@ services:
       - LH_DB_URL
       - PGD_DB_URL
       - TABLE_NAME 
+      - GEMINI_API_KEY
     restart: always

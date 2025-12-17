@@ -7,8 +7,8 @@ import {
   X, 
   Send, 
   Terminal, // Icon for the log
-  ChevronRight, // Added missing import
-  ChevronLeft,  // Added missing import
+  ChevronRight,
+  ChevronLeft,
   
   // Analytics & Sim
   TrendingUp, 
@@ -35,31 +35,31 @@ import {
 /* CONFIGURATION                               */
 /* -------------------------------------------------------------------------- */
 
-const API_KEY = "AIzaSyDl_nzrjkLSLXwsRMB1svw8yM5f7mh00hw"; // 🔴 INSERT YOUR GEMINI API KEY HERE
+// 🔴 SECURITY UPDATE: API Key removed. 
+// Now calls the backend proxy at localhost:8000/generate
 
-// Mock AI Service
 const callGemini = async (prompt, systemInstruction = "") => {
-  if (!API_KEY) {
-    console.warn("No API Key provided. Returning mock response.");
-    return null;
-  }
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          systemInstruction: { parts: [{ text: systemInstruction }] }
-        })
-      }
-    );
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: prompt,
+        system_instruction: systemInstruction
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Backend API Error: ${response.statusText}`);
+    }
+
     const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text;
+    // Expecting backend to return { "text": "AI response content" }
+    return data.text;
+
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return null;
+    console.error("AI Service Error:", error);
+    return null; // Fail gracefully so app doesn't crash
   }
 };
 
@@ -623,7 +623,7 @@ export default function App() {
     fetchData();
 
     // Poll every 2 seconds
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 2000);
     return () => clearInterval(interval);
   }, []);
 

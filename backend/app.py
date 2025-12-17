@@ -9,6 +9,7 @@ from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 import random
 from psycopg2 import sql
+import requests
 
 app = FastAPI()
 
@@ -30,13 +31,14 @@ pgd_url = os.getenv("PGD_DB_URL")
 
 # Schema name for fully-qualified table references (default to public)
 TABLE_NAME = os.getenv("TABLE_NAME", "transactions")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # --- DATA MODEL ---
 class TransactionStats(BaseModel):
     total_count: int
     count_last_hour: int
     total_revenue: Decimal
-    
+ 
 # Define a new model for the list items
 class ChartDataPoint(BaseModel):
     minute_bucket: datetime
@@ -47,6 +49,10 @@ class TransactionInput(BaseModel):
     user_id: int = None
     amount: Decimal = None
     transaction_type: str = None
+    
+class GeminiRequest(BaseModel):
+    prompt: str
+    system_instruction: str = ""
 
 @app.get("/")
 def root():
@@ -178,3 +184,24 @@ def create_transaction(txn: TransactionInput):
     except psycopg2.Error as e:
         print(f"Database Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to insert transaction")
+
+@app.post("/generate")
+async def generate_text(request: GeminiRequest):
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Server missing API Key")
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={GEMINI_API_KEY}"
+    
+    payload = {
+        "contents": [{"parts": [{"text": request.prompt}]}],
+        "systemInstruction": {"parts": [{"text": request.system_instruction}]}
+    }
+    
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        text = data['candidates'][0]['content']['parts'][0]['text']
+        return {"text": text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

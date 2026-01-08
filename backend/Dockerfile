@@ -16,9 +16,6 @@ COPY app.py .
 # 6. Expose the port the app runs on
 EXPOSE 8000
 
-# Copy the PyIceberg catalog definition file
-COPY .pyiceberg.yaml .
-
 # 7. Command to run the application
 # Note: We use --host 0.0.0.0 so the container is accessible from outside
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

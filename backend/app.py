@@ -145,7 +145,8 @@ def create_transaction(txn: TransactionInput):
         user_id = txn.user_id if txn.user_id else random.randint(1, 1000)
         
         # Random amount between 1.00 and 500.00 if missing
-        amount = txn.amount if txn.amount is not None else Decimal(random.uniform(1, 500)).quantize(Decimal("0.01"))
+        # amount = txn.amount if txn.amount is not None else Decimal(random.uniform(1, 500)).quantize(Decimal("0.01"))
+        amount = 5.00 
         
         # Random type if missing
         if txn.transaction_type:
